@@ -1,27 +1,128 @@
-Nesta atividade, os alunos deverão desenvolver um smart contract em Solidity para a implementação do jogo Jokenpô, seguindo as boas práticas de desenvolvimento e controle de versão para a construção de um jogo com regras transparentes e facilmente verificáveis.
+# SmartContract jogoJokenpo.sol
 
-O Jokenpô segue a dinâmica tradicional:
+**ContractAdress:** "*0x276C73De6d2813D420577355FaC7900827243AD1*"
 
-- Pedra vence Tesoura.
+## Função primordial
+O referido smartcontract tem a funcionalidade de simular um Jokenpô, analisar as jogas e decretar empate, vitória ou derrota e ainda estipular o dono do contrato como único acesso para modificação e inserção de informações
 
-- Tesoura vence Papel.
+## Funcionalidades
 
-- Papel vence Pedra.
+### 1. Listagem de símbolos
+- **Descrição:** Permite listar os 3 tipos de símbolos possíveis para se jogar
+- **Código:**
+  - `enum Simbolo { Pedra, Papel, Tesoura }'
 
-Os alunos devem garantir que o contrato permita o jogo de forma segura e justa, evitando manipulações ou estados inconsistentes.
+### 2. Controle de Acesso
+- **Descrição:** Implementa restrições para que apenas o dono do contrato possa executar determinadas funções.
+- **Funções principais:**
+  -  `modifier onlyOwner() { 
+        require(msg.sender == owner, "Apenas o dono pode modificar");
+        _;
+    }
+    constructor() { 
+        owner = msg.sender;`
 
-Para cumprir esta atividade, você deve:
+### 3. Uso de Mapping
+- **Descrição:** Utiliza mappings para associar chaves a valores, permitindo consultas rápidas.
+- **Exemplos:**
+  - Mapping de endereços para jogadas.
+  - Mapping para registrar os símbolos jogados anteriormente.
+- **Funções principais:**
+-   `mapping(uint256 => address) public jogador;
+    mapping(uint256 => Simbolo) public simboloejogado;`
 
-(até 2,0 pontos) 1 - Utilizar GitHub para versionamento, com branches e pull requests. Você deve seguir boas práticas de desenvolvimento e controle de versão.
+### 4. Variáveis reutilizadas
+- **Descrição:** Utiliza variáveis para armazenar e setar valores primordias que serão utilizados na lógica.
+- **Funções principais:**
+-   `uint256 public maxJogada = 10;
+    uint256 public jogadacorrente;`
 
-(até 2,0 pontos) 2 - Definir e documentar as regras de negócio no arquivo Markdown.
+### 5. Função de Registrar um Jogo
+- **Descrição:** Função para receber os devidos parâmetros necessários e registrar um jogo no contrato
+- **Funções principais:**
+-   `function registrarJogo(address _jogador, Simbolo simbolejo) public {
+        require(jogadacorrente < maxJogada, "Numero maximo de jogadas atingido");
+        jogador[jogadacorrente] = _jogador;
+        simboloejogado[jogadacorrente] = simbolejo;
+        jogadacorrente++;
+    };`
 
-(até 2,0 pontos) 3 - Seu código deve definir e armazenar as jogadas dos jogadores no contrato. Deve existir um mecanismo para que as jogadas passadas sejam registradas no contrato, garantindo integridade dos dados. Estas jogadas devem ser consultadas quando necessário.
+### 6. Função de Verificar uma Jogada
+- **Descrição:** Função para comparar as jogas dos dois últimos jogadores e decretar quem venceu
+- **Funções principais:**
+-   `function verificarJogada(uint256 index1, uint256 index2) public view returns (string memory) {
+        require(index1 < jogadacorrente && index2 < jogadacorrente, "Indices de jogada invalidos");
+        Simbolo simbolo1 = simboloejogado[index1];
+        Simbolo simbolo2 = simboloejogado[index2];
+        if(simbolo1 == simbolo2) {
+            return "Empate";
+        }
+        if ((simbolo1 == Simbolo.Pedra && simbolo2 == Simbolo.Tesoura) ||
+            (simbolo1 == Simbolo.Papel && simbolo2 == Simbolo.Pedra) ||
+            (simbolo1 == Simbolo.Tesoura && simbolo2 == Simbolo.Papel)) {
+            return "Jogador 1 Ganhou!";
+        } else {
+            return "Jogador 2 Ganhou!";
+        }
+    }`
 
-(até 2,0 pontos) 4 – Seu código deve contemplar uma forma de comparar as jogadas e determinar um vencedor, considerando inclusive a possibilidade de empate e nova rodada.
+## Exemplo de testes no Remix IDE
 
-(até 2,0 pontos) 5 – Seu código deve assegurar que apenas participantes legítimos possam jogar. Você também deve aplicar regras de controle de acesso para que somente o dono do contrato possa modificar dados críticos no contrato.
+<div align="center">
+<sub>Figura 01</sub><br>
+<img src="assets/teste.png" width="80%" ><br>
+<sup>Fonte: Material produzido pelo autor (2025)</sup>
+</div>
 
-O contrato deve ser compilado e implantado no Remix IDE.
+## Código Inteiro
 
-Testes manuais devem ser realizados no Remix IDE após a implantação do contrato, e estes resultados devem ser registrados com capturas de tela para mostrar o correto cumprimento de cada tarefa.
+```sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.4;
+
+contract JogoDoJokempo {
+    enum Simbolo { Pedra, Papel, Tesoura }
+
+    mapping(uint256 => address) public jogador;
+    mapping(uint256 => Simbolo) public simboloejogado;
+    address public owner;
+
+    uint256 public maxJogada = 10;
+    uint256 public jogadacorrente;
+
+    modifier onlyOwner() { 
+        require(msg.sender == owner, "Apenas o dono pode modificar");
+        _;
+    }
+    constructor() { 
+        owner = msg.sender;
+    }
+
+    function registrarJogo(address _jogador, Simbolo simbolejo) public {
+        require(jogadacorrente < maxJogada, "Numero maximo de jogadas atingido");
+        
+        jogador[jogadacorrente] = _jogador;
+        simboloejogado[jogadacorrente] = simbolejo;
+        jogadacorrente++;
+    }
+
+    function verificarJogada(uint256 index1, uint256 index2) public view returns (string memory) {
+        require(index1 < jogadacorrente && index2 < jogadacorrente, "Indices de jogada invalidos");
+        
+        Simbolo simbolo1 = simboloejogado[index1];
+        Simbolo simbolo2 = simboloejogado[index2];
+
+        if(simbolo1 == simbolo2) {
+            return "Empate";
+        }
+
+        if ((simbolo1 == Simbolo.Pedra && simbolo2 == Simbolo.Tesoura) ||
+            (simbolo1 == Simbolo.Papel && simbolo2 == Simbolo.Pedra) ||
+            (simbolo1 == Simbolo.Tesoura && simbolo2 == Simbolo.Papel)) {
+            return "Jogador 1 Ganhou!";
+        } else {
+            return "Jogador 2 Ganhou!";
+        }
+    }
+}
+```
